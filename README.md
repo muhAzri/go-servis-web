@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GoService — Web
 
-## Getting Started
+Marketing landing page and admin backend for **GoService**, a service-reminder
+app for motorcycle & car owners in Indonesia (Android, package
+`com.zrifapps.goservice`).
 
-First, run the development server:
+Built with Next.js 16 (App Router), Tailwind CSS v4, lucide-react, motion, and
+Supabase.
+
+## What's inside
+
+- **Landing page** (`/`) — hero, features, how-it-works, component intervals,
+  privacy, FAQ, and a Google Play CTA. Fully server-rendered and SEO-tuned
+  (metadata, JSON-LD, sitemap, robots, manifest, dynamic OG image).
+- **Legal pages** — `/privacy` and `/terms`, mirrored from the in-app screens.
+- **Feedback API** (`POST /api/feedback`) — public endpoint the mobile app calls
+  to submit feedback / bug reports.
+- **Admin** (`/admin`) — Supabase-authenticated dashboard to review, resolve,
+  and soft-delete (mark invalid / spam) reports. Guarded by a route proxy.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+yarn install
+yarn dev      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Other scripts: `yarn build`, `yarn start`, `yarn lint`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> This project uses Yarn with the `node-modules` linker (`.yarnrc.yml`) because
+> Turbopack — the default builder in Next 16 — does not resolve Yarn PnP.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment variables
 
-## Learn More
+Create `.env.local` (see `.env.local` for the live values):
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+NEXT_PUBLIC_SITE_URL=https://your-domain.com        # canonical/OG/sitemap base (defaults to a placeholder)
+NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...   # browser/SSR auth (RLS)
+SUPABASE_SECRET_KEY=sb_secret_...                         # server only — feedback inserts
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Anything sent to crawlers (canonical URL, Open Graph, sitemap) uses
+`NEXT_PUBLIC_SITE_URL`; set the real domain before deploying.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Supabase setup
 
-## Deploy on Vercel
+Database migrations, RLS policies, and how to create the admin account are
+documented in [`supabase/README.md`](./supabase/README.md). Schema changes live
+as ordered files in [`supabase/migrations/`](./supabase/migrations).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Quick version:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Apply the files in `supabase/migrations/` (in order) via the Supabase SQL
+   Editor or `supabase db push`.
+2. Add `SUPABASE_SECRET_KEY` to `.env.local`.
+3. Create an admin user in **Authentication → Users** and disable public signup.
+
+## Feedback API
+
+`POST /api/feedback` — `Content-Type: application/json`
+
+```jsonc
+{
+  "type": "bug",            // or "feedback" (default)
+  "message": "…",           // required, 1–5000 chars
+  "email": "user@mail.com", // optional
+  "app_version": "1.0.0",   // optional context
+  "platform": "android",
+  "device_model": "…",
+  "os_version": "14",
+  "metadata": {}            // optional free-form object
+}
+```
+
+Responses: `201 { ok, id }` · `422 { error }` (validation) · `400` (bad JSON).
+The route inserts using the secret key server-side, so the app never holds a
+write key and the table stays locked by RLS.
+
+## Project structure
+
+```
+src/
+  app/
+    page.tsx              landing page
+    privacy/ terms/       legal pages
+    api/feedback/         public submission endpoint
+    admin/                auth-guarded review dashboard
+    layout.tsx            metadata, fonts, JSON-LD
+    sitemap.ts robots.ts manifest.ts opengraph-image.tsx icon.svg
+  components/             landing + admin UI
+  lib/
+    site.ts legal.ts      content (single source of truth)
+    feedback.ts           feedback types + validation
+    supabase/             server & admin clients, session proxy
+  proxy.ts                admin route guard (Next 16 proxy convention)
+supabase/                 migrations/ + setup guide
+```
+
+## Deploy
+
+Deploys cleanly to Vercel. Set the env vars above in the project settings
+(`SUPABASE_SECRET_KEY` as a non-public secret).
