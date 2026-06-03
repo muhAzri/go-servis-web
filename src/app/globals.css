@@ -1,26 +1,70 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Brand palette — mirrors the app's AppColors.kt */
+  --color-brand: #2e8b57;
+  --color-brand-dark: #22683f;
+  --color-brand-soft: #dceedf;
+  --color-brand-softer: #ebf5ed;
+
+  --color-cream: #faf7f2;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f2eee6;
+
+  --color-ink: #1a2418;
+  --color-ink-muted: #5c6357;
+  --color-ink-subtle: #8a8e82;
+
+  --color-warn: #e89c2e;
+  --color-danger: #d6453a;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1.25rem;
+
+  --shadow-soft: 0 1px 2px rgba(26, 36, 24, 0.04),
+    0 8px 24px -12px rgba(26, 36, 24, 0.12);
+  --shadow-lift: 0 24px 60px -28px rgba(34, 104, 63, 0.45);
+
+  --animate-marquee: marquee 28s linear infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Subtle dotted texture used behind hero / CTA sections */
+.bg-dots {
+  background-image: radial-gradient(
+    rgba(46, 139, 87, 0.12) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
 }
